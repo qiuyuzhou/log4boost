@@ -10,11 +10,9 @@ set(appender_src
     console_appender.cpp
 	tcp_appender.cpp
     log_agent_appender.cpp
-    log_agent.cpp
 	)
 
 set(appender_header
-    log_agent.hpp
 	../include/log4boost/appender/appender.hpp
 	../include/log4boost/appender/layout_appender.hpp
 	../include/log4boost/appender/ostream_appender.hpp
