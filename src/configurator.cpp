@@ -261,7 +261,7 @@ namespace log4boost
 		try
 		{
 			config_file.seekg(0,std::ios_base::end);
-			std::size_t filesize = config_file.tellg();
+			std::size_t filesize = (std::size_t)config_file.tellg();
 			config_file.seekg(0,std::ios_base::beg);
 
 			if (filesize==0)

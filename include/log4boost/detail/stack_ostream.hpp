@@ -24,7 +24,7 @@ namespace log4boost
 			typedef std::basic_ostream<char_type> out_t;
 
 			basic_stack_ostream()
-				:array_stream_buffer_(buffer_)
+				:array_stream_buffer_(buffer_,buffer_size)
 				,out_(&array_stream_buffer_)
 			{}
 
@@ -45,7 +45,7 @@ namespace log4boost
 
 			inline void fill_end_null()
 			{
-				std::size_t pos = out_.tellp();
+				std::size_t pos = (std::size_t)out_.tellp();
 				if (pos<buffer_size)
 				{
 					buffer_[pos] = 0;
