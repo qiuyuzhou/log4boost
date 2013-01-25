@@ -1,3 +1,5 @@
 *~
 *.swp
-
+build_*
+lib
+bin
