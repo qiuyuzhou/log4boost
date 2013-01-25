@@ -200,16 +200,14 @@ include(MSVCPCH)
 use_msvc_pch(log4boost stdafx.h stdafx.cpp)
 
 
-if(WIN32)
-    # log agent
-    add_executable(log_agent
-        log_agent_main.cpp
-        )
-    link_boost(log_agent system program_options date_time filesystem thread)
+# log agent
+add_executable(log_agent
+    log_agent_main.cpp
+    )
+link_boost(log_agent system program_options date_time filesystem thread)
 
-    target_link_libraries(log_agent log4boost)
-    add_dependencies(log_agent log4boost)
-endif(WIN32)
+target_link_libraries(log_agent log4boost)
+add_dependencies(log_agent log4boost)
 
 # log server
 add_executable(log_server
@@ -226,7 +224,7 @@ add_dependencies(log_server log4boost)
 # install
 install(DIRECTORY ../include DESTINATION ./ PATTERN ".svn" EXCLUDE)
 
-install(TARGETS log4boost 
+install(TARGETS log4boost log_agent
 	ARCHIVE	DESTINATION	lib
 	LIBRARY DESTINATION lib
 	RUNTIME	DESTINATION bin
