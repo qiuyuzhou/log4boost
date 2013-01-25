@@ -38,7 +38,7 @@ namespace log4boost
 		T* get_layout()
 		{
 			BOOST_STATIC_ASSERT( (std::is_base_of<layout,T>::value) );
-			return (T*)layout_;
+			return dynamic_cast<T*>(layout_);
 		}
 
 	protected:

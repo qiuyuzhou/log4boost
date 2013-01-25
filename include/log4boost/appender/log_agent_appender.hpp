@@ -16,6 +16,8 @@
 
 #include <boost/any.hpp>
 
+#include <stdio.h>
+
 
 namespace log4boost
 {
@@ -118,7 +120,7 @@ namespace log4boost
 		bool			process_full_log;
 
 		mutable mutex	mutex_;
-		int fdpipe_[2];
+		FILE* out_fp_;
 	};
 
 

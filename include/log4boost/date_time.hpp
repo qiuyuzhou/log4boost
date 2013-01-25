@@ -7,6 +7,7 @@
 #include <log4boost/config.hpp>
 
 #include <string>
+#include <cstdint>
 
 namespace boost { namespace posix_time { class ptime; } }
 

@@ -27,6 +27,26 @@
 using namespace log4boost;
 enum PIPES { READ, WRITE }; /* Constants 0 and 1 for READ and WRITE */
 
+static int read_until_size( FILE* fp, void* pBuf, size_t request_size )
+{
+	int bytes_read = 0;
+
+	do
+	{
+		int r = fread( (void*)((char*)pBuf + bytes_read), 1, request_size - bytes_read,fp );
+		if ( r > 0 )
+		{
+			bytes_read += r;		
+		}
+		else
+		{
+			return r;
+		}
+	}
+	while( bytes_read < request_size );
+	return bytes_read;
+}
+
 int read_until_size( int fp, void* pBuf, size_t request_size )
 {
 	int bytes_read = 0;
@@ -47,6 +67,7 @@ int read_until_size( int fp, void* pBuf, size_t request_size )
 	return bytes_read;
 }
 
+/*
 void stand_alone_agent( boost::program_options::variables_map& vm )
 {
 	std::string config_file = vm["config-file"].as<std::string>();
@@ -109,7 +130,7 @@ void stand_alone_agent( boost::program_options::variables_map& vm )
 		}
 		if ( size_logger > 0 )
 		{
-			if ( size_logger > 16*1024 /*Max size limit*/)
+			if ( size_logger > 16*1024 )//
 			{
 				close(fdpipe[READ]);
 				return;
@@ -133,7 +154,7 @@ void stand_alone_agent( boost::program_options::variables_map& vm )
 		}
 		if ( size_message > 0 )
 		{
-			if ( size_message > 1024*1024 /*Max size limit*/)
+			if ( size_message > 1024*1024 )//*Max size limit
 			{
 				close(fdpipe[READ]);
 				return;
@@ -154,19 +175,20 @@ void stand_alone_agent( boost::program_options::variables_map& vm )
 
 	close(fdpipe[READ]);
 }
+*/
 
 void appender_agent( boost::program_options::variables_map& vm )
 {
-	if ( vm.count("writer-type") == 0 || vm.count("pipe-read") == 0 || vm.count("pipe-write") == 0 )
+	if ( vm.count("writer-type") == 0 )
 	{
 		throw std::runtime_error("Must specify options 'write-type,pipe-read,pipe-write'");
 	}
 	std::string writer_type = vm["writer-type"].as<std::string>();
 
 	bool process_full_log = vm["process-full-log"].as<bool>();
-	int fdpipe[2];
-	fdpipe[READ] = vm["pipe-read"].as<int>();
-	fdpipe[WRITE] = vm["pipe-write"].as<int>();
+	//int fdpipe[2];
+	//fdpipe[READ] = vm["pipe-read"].as<int>();
+	//fdpipe[WRITE] = vm["pipe-write"].as<int>();
 	//close(fdpipe[WRITE]);
 
 	shared_ptr<writer>	writer_ptr;
@@ -237,7 +259,7 @@ void appender_agent( boost::program_options::variables_map& vm )
 
 			while( true )
 			{
-				bytes_read = read_until_size( fdpipe[READ], size_buffer, 4 );
+				bytes_read = read_until_size( 0, size_buffer, 4 );
 				if ( bytes_read <= 0 )
 				{
 					break;
@@ -248,7 +270,7 @@ void appender_agent( boost::program_options::variables_map& vm )
 				}
 				if ( size > 1024*1024 /*Max size limit*/)
 				{
-					close(fdpipe[READ]);
+					close(0);
 					writer_ptr->close();
 					return;
 				}
@@ -257,7 +279,7 @@ void appender_agent( boost::program_options::variables_map& vm )
 					buffer.resize( size );
 				}
 
-				bytes_read = read_until_size( fdpipe[READ], &buffer[0], size );
+				bytes_read = read_until_size( 0, &buffer[0], size );
 				if ( bytes_read <= 0 )
 				{
 					break;
@@ -272,7 +294,7 @@ void appender_agent( boost::program_options::variables_map& vm )
 			char buffer[1024*4];
 			while ( true ) 
 			{
-				int bytes_read = read( fdpipe[READ], buffer, sizeof(buffer) );
+				int bytes_read = read( 0, buffer, sizeof(buffer) );
 				if ( bytes_read <= 0 )
 				{
 					break;
@@ -282,7 +304,7 @@ void appender_agent( boost::program_options::variables_map& vm )
 		}
 
 		writer_ptr->close();
-		close(fdpipe[READ]);
+		close(0);
 	}
 }
 
@@ -300,8 +322,8 @@ int agent_main(int argc, char *argv[])
 			("config-string", po::value<std::string>(), "Specify the config string if it is in standalone mode." )
 
 			("writer-type", po::value<std::string>(), "Support types: file_writer, rolling_file_writer, tcp_writer" )
-			("pipe-read", po::value<int>(), "Input pipe file desc" )
-			("pipe-write", po::value<int>(), "Output pipe file desc" )
+			//("pipe-read", po::value<int>(), "Input pipe file desc" )
+			//("pipe-write", po::value<int>(), "Output pipe file desc" )
 
 			("process-full-log", po::value<bool>(), "Whether it can be processed as data stream" )
 
@@ -325,7 +347,7 @@ int agent_main(int argc, char *argv[])
 
 		if ( vm["standalone-mode"].as<bool>() )
 		{
-			stand_alone_agent( vm );
+			//stand_alone_agent( vm );
 		}
 		else
 		{

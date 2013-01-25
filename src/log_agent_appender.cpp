@@ -12,6 +12,8 @@
 #include "log4boost/layout_factory.hpp"
 #include "io.hpp"
 
+#include <boost/format.hpp>
+
 #if defined(WIN32) || defined(WIN64)
 #	include "io.h"
 #else
@@ -19,6 +21,7 @@
 #	define _write write
 #	define _close close
 #	define _pipe pipe
+#	define _popen popen
 #endif
 
 #include <fcntl.h>
@@ -30,6 +33,25 @@
 namespace log4boost
 {
 
+	static int write_until_size( FILE* fp, const char* pBuf, size_t request_size )
+	{
+		int	bytes_write = 0;
+		do
+		{
+			int r = fwrite( (void*)(pBuf + bytes_write), 1, request_size - bytes_write, fp );
+			if ( r > 0 )
+			{
+				bytes_write += r;
+			}
+			else
+			{
+				return r;
+			}
+		}
+		while( bytes_write < (int) request_size );
+
+		return bytes_write;
+	}
 	static int write_until_size( int fp, const char* pBuf, size_t request_size )
 	{
 		int	bytes_write = 0;
@@ -56,9 +78,8 @@ namespace log4boost
 		:layout_appender(name,_layout)
 		,agent_settings_(wt_file)
 		,process_full_log(false)
+		,out_fp_(NULL)
 	{
-		fdpipe_[0] = -1;
-		fdpipe_[1] = -1;
 	}
 
 	log_agent_appender::~log_agent_appender()
@@ -87,7 +108,7 @@ namespace log4boost
 	
 		mutex::scoped_lock	lock(mutex_);
 
-		if ( fdpipe_[WRITE] < 0 )
+		if ( out_fp_ == NULL )
 		{
 			return;
 		}
@@ -109,20 +130,18 @@ namespace log4boost
 				io::write_uint32( size, p_size_buf );
 			}
 
-			bytes_write = write_until_size( fdpipe_[WRITE], size_buf, 4 );
-			if ( bytes_write <= 0 )
+			bytes_write = write_until_size( out_fp_, size_buf, 4 );
+			if ( bytes_write != 4 )
 			{
-				::_close(fdpipe_[WRITE]);
-				fdpipe_[WRITE] = -1;
+				close_i();
 				return;
 			}
 		}
 
-		bytes_write = write_until_size( fdpipe_[WRITE], p, size );
-		if ( bytes_write <= 0 )
+		bytes_write = write_until_size( out_fp_, p, size );
+		if ( bytes_write != size )
 		{
-			::_close(fdpipe_[WRITE]);
-			fdpipe_[WRITE] = -1;
+			close_i();
 			return;
 		}
 	}
@@ -138,52 +157,49 @@ namespace log4boost
 	}
 	void log_agent_appender::reopen_i()
 	{
-		if ( _pipe( fdpipe_, 1024*64, O_BINARY ) == -1 )
-		{
-			throw std::runtime_error("Create pipe failed!");
-		}
-
-		char arguments[16*1024];
+		std::ostringstream arguments;
+#if defined(WIN32) || defined(WIN64)
+		arguments << "log_agent.exe ";
+#else
+		arguments << "log_agent";
+#endif
 
 		if ( agent_settings_.writer_type == wt_file )
 		{
 			const file_writer_settings& settings = boost::any_cast<file_writer_settings>(writer_settings_);
 
-			sprintf(arguments, "log_agent.exe --writer-type=file_writer --file-path=\"%s\" --append=%d --pipe-read=%d  --pipe-write=%d --process-full-log=%d"
-				, settings.file_path.c_str()
-				, settings.append?1:0
-				, fdpipe_[READ]
-				, fdpipe_[WRITE]
-				, process_full_log?1:0
-				);
+			arguments << boost::format("--writer-type=file_writer --file-path=\"%1%\" --append=%2% --process-full-log=%3%")
+				%settings.file_path.c_str()
+				%(settings.append?1:0)
+				%(process_full_log?1:0)
+				;
 		}
 		else if ( agent_settings_.writer_type == wt_rolling_file )
 		{
 			const rolling_file_settings&	settings = boost::any_cast<rolling_file_settings>(writer_settings_);
 			
-			sprintf(arguments, "log_agent.exe --writer-type=rolling_file_writer --rolling-file-path=\"%s\" --file-count=%d --extension-name=\"%s\" --max-size-bytes=%d --new-file-by-date=%d --initial-erase=%d  --pipe-read=%d --pipe-write=%d --process-full-log=%d"
-				, settings.file_path.c_str()
-				, settings.file_count
-				, settings.extension_name.c_str()
-				, settings.max_size_bytes
-				, settings.new_file_by_date?1:0
-				, settings.initial_erase?1:0
-				, fdpipe_[READ]
-				, fdpipe_[WRITE]
-				, process_full_log?1:0
-				);
+			arguments << boost::format("--writer-type=rolling_file_writer --rolling-file-path=\"%1%\" --file-count=%2%" 
+				" --extension-name=\"%3%\" --max-size-bytes=%4%"
+				" --new-file-by-date=%5% --initial-erase=%6% --process-full-log=%7%")
+				%settings.file_path.c_str()
+				%settings.file_count
+				%settings.extension_name.c_str()
+				%settings.max_size_bytes
+				%(settings.new_file_by_date?1:0)
+				%(settings.initial_erase?1:0)
+				%(process_full_log?1:0)
+				;
 		}
 		else if ( agent_settings_.writer_type == wt_tcp )
 		{
 			process_full_log = true;
 			const tcp_writer_settings&		settings = boost::any_cast<tcp_writer_settings>(writer_settings_);
-			sprintf(arguments, "log_agent.exe --writer-type=tcp_writer --host=\"%s\" --port=%d --pipe-read=%d --pipe-write=%d --process-full-log=%d"
-				, settings.host.c_str()
-				, settings.port
-				, fdpipe_[READ]
-				, fdpipe_[WRITE]
-				, process_full_log?1:0
-				);
+
+			arguments << boost::format("--writer-type=tcp_writer --host=\"%1%\" --port=%2% --process-full-log=%3%" )
+				%settings.host.c_str()
+				%settings.port
+				%(process_full_log?1:0)
+				;
 		}
 		else
 		{
@@ -191,34 +207,20 @@ namespace log4boost
 		}
 
 		namespace po = boost::program_options;
-		std::vector<std::string> argsv = po::split_winmain(arguments);
 
-		boost::scoped_array<const char*>	args(new const char*[ argsv.size() + 1 ] );
-		for ( unsigned int i = 0; i < argsv.size(); ++i )
-		{
-			args[i] = argsv[i].c_str();
-		}
-		args[argsv.size()] = 0;
-
-		if ( -1 == _spawnv(_P_DETACH,"log_agent.exe",args.get()) )
+		out_fp_ = _popen( arguments.str().c_str(), "wt");
+		if ( out_fp_ == NULL )
 		{
 			throw std::runtime_error( std::string("spawn log agent process failed! error string: ") + strerror(errno) );
 		}
-		::_close(fdpipe_[READ]);
-		fdpipe_[READ] = -1;
 	}
     
 	void log_agent_appender::close_i()
 	{
-		if ( fdpipe_[WRITE] >= 0)
+		if ( out_fp_ != NULL )
 		{
-			::_close(fdpipe_[WRITE]);
-			fdpipe_[WRITE] = -1;
-		}
-		if( fdpipe_[READ] >= 0 )
-		{
-			::_close(fdpipe_[READ]);
-			fdpipe_[READ] = -1;
+			fclose(out_fp_);
+			out_fp_ = NULL;
 		}
 	}
 
