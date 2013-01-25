@@ -45,6 +45,7 @@ namespace log4boost
 			}
 			catch (const fs::filesystem_error& e)
 			{
+				(e);
 				//std::cout << "...Rename Fail! from: " << from_path << " to: " << to_path << " retry: " << try_count << std::endl; 
 
 				try_count--;
