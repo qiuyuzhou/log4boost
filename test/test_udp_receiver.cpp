@@ -19,7 +19,7 @@ int test_main( int, char*[] )
 	logger::get_root().set_priority( priority::PL_ALL );
 
 	boost::shared_ptr<udp_receiver> r = udp_receiver::create( "udp" );
-	r->enable_relog("logging_test");
+	//r->enable_relog("logging_test");
 	r->open("",6637);
 
 

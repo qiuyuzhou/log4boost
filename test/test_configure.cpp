@@ -22,9 +22,9 @@ void test_configure(void)
 	L_INFO(l,"info 3");
 	L_WARN(l,"warn 4");
 	L_ERROR(l,"error 5");
-
+#if defined(WIN32)||defined(WIN64)
 	Sleep(5000);
-
+#endif
 	logger& l1 = logger::get("debug.n1");
 	L_DEBUG(l1,"debug 1");
 	L_DEBUG(l1,"debug 2");

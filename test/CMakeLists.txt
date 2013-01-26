@@ -23,14 +23,15 @@ add_logging_test(test_configure_and_watch_0 test_configure_and_watch_0.cpp)
 add_logging_test(test_configure_and_watch_1 test_configure_and_watch_1.cpp)
 
 add_logging_test(test_console_appender test_console_appender.cpp)
-add_logging_test(test_ipc_receiver test_ipc_receiver.cpp)
-add_logging_test(test_ipc_appender test_ipc_appender.cpp)
+#add_logging_test(test_ipc_receiver test_ipc_receiver.cpp)
+#add_logging_test(test_ipc_appender test_ipc_appender.cpp)
 add_logging_test(test_udp_receiver test_udp_receiver.cpp)
 
 add_logging_test(test_tcp_appender test_tcp_appender.cpp)
 
+add_logging_test(test_log_agent_appender test_log_agent_appender.cpp)
+
 if(WIN32)
-    add_logging_test(test_log_agent_appender test_log_agent_appender.cpp)
     add_logging_test(test_win32_debug_appender test_win32_debug_appender.cpp)
 endif(WIN32)
 

@@ -133,6 +133,7 @@ namespace log4boost
 			bytes_write = write_until_size( out_fp_, size_buf, 4 );
 			if ( bytes_write != 4 )
 			{
+                std::cerr << "bytes_write != 4" << std::endl;
 				close_i();
 				return;
 			}
@@ -141,6 +142,7 @@ namespace log4boost
 		bytes_write = write_until_size( out_fp_, p, size );
 		if ( bytes_write != size )
 		{
+            std::cerr << "bytes_write != size" << std::endl;
 			close_i();
 			return;
 		}
@@ -161,7 +163,7 @@ namespace log4boost
 #if defined(WIN32) || defined(WIN64)
 		arguments << "log_agent.exe ";
 #else
-		arguments << "log_agent";
+		arguments << "log_agent ";
 #endif
 
 		if ( agent_settings_.writer_type == wt_file )
@@ -208,7 +210,7 @@ namespace log4boost
 
 		namespace po = boost::program_options;
 
-		out_fp_ = _popen( arguments.str().c_str(), "wt");
+		out_fp_ = _popen( arguments.str().c_str(), "w");
 		if ( out_fp_ == NULL )
 		{
 			throw std::runtime_error( std::string("spawn log agent process failed! error string: ") + strerror(errno) );

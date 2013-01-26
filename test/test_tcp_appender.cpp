@@ -9,7 +9,6 @@
 #include "log4boost/layout/log4j_xml_layout.hpp"
 #include "log4boost/layout/binary_layout.hpp"
 
-#include <Windows.h>
 #include "log4boost/appender/console_appender.hpp"
 
 
@@ -74,8 +73,9 @@ int main( int, char*[] )
 
 	//test_tcp_appender();
 	test_tcp_appender_with_bianry_layout();
-
+#if defined(WIN32)||defined(WIN64)
 	Sleep(1000);
+#endif
 	log4boost::shutdown();
 	return 0;
 }
