@@ -92,7 +92,7 @@ endif(WIN32)
 
 #set(BOOST_ROOT "" CACHE PATH "Set this to the include directory of Boost, if the module has problems finding the proper Boost installation")
 #set(Boost_LIBRARYDIR "" CACHE PATH "Set this to the lib directory of Boost, if the module has problems finding the proper Boost installation")
-set(Boost_VERSION_USE "1.51" CACHE STRING "The version of boost library should used.")
+set(Boost_VERSION_USE "1.50" CACHE STRING "The version of boost library should used.")
 
 message(STATUS "BOOST_ROOT: " ${BOOST_ROOT})
 message(STATUS "Boost_LIBRARYDIR: " ${Boost_LIBRARYDIR})
