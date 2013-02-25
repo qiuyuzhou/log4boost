@@ -86,7 +86,7 @@ namespace log4boost
 				af->register_creator( new win32_debug_appender_creator() );
 #endif//WIN32
 				af->register_creator( new log_agent_appender_creator() );
-				//af->register_creator( new console_appender_creator() );
+				af->register_creator( new console_appender_creator() );
 				//af->register_creator( new ipc_appender_creator() );
 				af->register_creator( new rolling_file_appender_creator() );
 				af->register_creator( new tcp_appender_creator() );
