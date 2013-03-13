@@ -8,6 +8,7 @@
 
 #include "log4boost/appender_factory.hpp"
 #include "log4boost/log4boost.hpp"
+#include "log4boost/priority.hpp"
 
 #include "ptree_inc.h"
 
@@ -60,7 +61,9 @@ namespace log4boost
 					continue;
 				}
 
-				(*i->second).create_appender(appender_name,param);
+				std::string threshold = param.get<std::string>("threshold","ALL");
+				shared_ptr<appender> pAppender = (*i->second).create_appender(appender_name,param);
+				pAppender->set_threshold( priority::get_level( boost::algorithm::to_upper_copy( threshold ) ) );
 			}
 		}
 		catch(const property_tree::ptree_error& e)
